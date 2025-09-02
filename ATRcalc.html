@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Futures Strategy & Simulation Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .result-box {
+            border: 1px solid #374151; /* gray-700 */
+        }
+    </style>
+</head>
+<body class="bg-gray-900 flex items-center justify-center min-h-screen p-4">
+    <div class="w-full max-w-2xl bg-gray-800 p-8 rounded-2xl shadow-2xl space-y-6">
+        
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-white">Futures Strategy & Simulation Calculator</h1>
+            <p class="text-gray-400 mt-2">Plan and Visualize Your Trading Strategy</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Left Column: Inputs -->
+            <div class="space-y-6">
+                <!-- Win Rate Section -->
+                <div class="bg-gray-700/50 p-4 rounded-xl">
+                    <h2 class="text-lg font-bold text-white text-center mb-3">1. Strategy Analysis</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center">
+                            <label for="winChance" class="block text-sm font-medium text-gray-300 mb-2">Win Chance (%)</label>
+                            <input type="number" id="winChance" value="30" step="1" class="bg-gray-900 text-white w-full rounded-lg p-2 text-center border border-gray-600 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div class="result-box bg-gray-900/80 p-2 rounded-lg text-center flex flex-col justify-center">
+                            <p class="text-sm font-medium text-gray-300">Break-Even R:R</p>
+                            <p id="breakEvenRatio" class="text-2xl font-bold text-white mt-1">--</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trade Levels Section -->
+                <div class="bg-gray-700/50 p-4 rounded-xl">
+                     <h2 class="text-lg font-bold text-white text-center mb-3">2. Trade Level Calculator</h2>
+                    <div class="space-y-3">
+                        <div class="flex rounded-md shadow-sm w-full">
+                            <button id="longBtn" class="px-3 py-2 text-sm font-medium text-white bg-indigo-600 rounded-l-md w-1/2">Long</button>
+                            <button id="shortBtn" class="px-3 py-2 text-sm font-medium text-white bg-gray-700 rounded-r-md w-1/2">Short</button>
+                        </div>
+                         <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label for="entryPrice" class="block text-xs font-medium text-gray-300 text-center mb-1">Entry Price</label>
+                                <input type="number" id="entryPrice" step="any" class="bg-gray-900 text-white w-full rounded-lg p-2 text-center border border-gray-600">
+                            </div>
+                             <div>
+                                <label for="atrValue" class="block text-xs font-medium text-gray-300 text-center mb-1">ATR Value</label>
+                                <input type="number" id="atrValue" step="any" class="bg-gray-900 text-white w-full rounded-lg p-2 text-center border border-gray-600">
+                            </div>
+                        </div>
+                         <div class="grid grid-cols-2 gap-2">
+                             <div>
+                                <label for="atrMultiplier" class="block text-xs font-medium text-gray-300 text-center mb-1">ATR Multiplier</label>
+                                <input type="number" id="atrMultiplier" value="2" step="0.1" class="bg-gray-900 text-white w-full rounded-lg p-2 text-center border border-gray-600">
+                            </div>
+                            <div>
+                                <label for="rewardRatio" class="block text-xs font-medium text-gray-300 text-center mb-1">Target R:R</label>
+                                <input type="number" id="rewardRatio" value="3" step="0.1" class="bg-gray-900 text-white w-full rounded-lg p-2 text-center border border-gray-600">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Results & Simulation -->
+            <div class="space-y-6">
+                <!-- Trade Levels Results -->
+                <div class="bg-gray-700/50 p-4 rounded-xl space-y-3">
+                    <div class="result-box bg-red-900/50 p-3 rounded-lg text-center">
+                        <p class="text-sm font-medium text-red-300">Stop-Loss Price</p>
+                        <p id="stopLoss" class="text-2xl font-bold text-white mt-1">--</p>
+                    </div>
+                    <div class="result-box bg-green-900/50 p-3 rounded-lg text-center">
+                        <p class="text-sm font-medium text-green-300">Take-Profit Price</p>
+                        <p id="takeProfit" class="text-2xl font-bold text-white mt-1">--</p>
+                    </div>
+                     <div class="result-box bg-gray-900/80 p-3 rounded-lg text-center">
+                        <p class="text-sm font-medium text-gray-300">Risk per Unit ($)</p>
+                        <p id="riskAmount" class="text-2xl font-bold text-white mt-1">--</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monte Carlo Simulation Section -->
+        <div class="bg-gray-700/50 p-4 rounded-xl mt-6">
+            <h2 class="text-lg font-bold text-white text-center mb-3">3. Monte Carlo Simulation</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                 <div class="text-center">
+                    <label for="startCapital" class="block text-sm font-medium text-gray-300 mb-1">Start Capital ($)</label>
+                    <input type="number" id="startCapital" value="1000" step="1" class="bg-gray-900 text-white w-full rounded-lg p-2 text-center border border-gray-600">
+                </div>
+                 <div class="text-center">
+                    <label for="riskPercent" class="block text-sm font-medium text-gray-300 mb-1">Risk per Trade (%)</label>
+                    <input type="number" id="riskPercent" value="1" step="0.1" class="bg-gray-900 text-white w-full rounded-lg p-2 text-center border border-gray-600">
+                </div>
+                 <div class="text-center">
+                    <label for="numTrades" class="block text-sm font-medium text-gray-300 mb-1">Number of Trades</label>
+                    <input type="number" id="numTrades" value="250" step="1" class="bg-gray-900 text-white w-full rounded-lg p-2 text-center border border-gray-600">
+                </div>
+                <button id="runSimBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg transition duration-300 self-end">Run Simulation</button>
+            </div>
+            <div class="bg-gray-900 p-2 rounded-lg">
+                <canvas id="monteCarloChart"></canvas>
+            </div>
+             <div id="simStats" class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2 text-center text-sm hidden">
+                <div class="bg-gray-900 p-2 rounded-lg"><p class="text-gray-400">Median Result</p><p id="medianResult" class="font-bold text-white"></p></div>
+                <div class="bg-green-900/50 p-2 rounded-lg"><p class="text-green-300">Best Case</p><p id="bestCase" class="font-bold text-white"></p></div>
+                <div class="bg-red-900/50 p-2 rounded-lg"><p class="text-red-300">Worst Case</p><p id="worstCase" class="font-bold text-white"></p></div>
+                <div class="bg-sky-900/50 p-2 rounded-lg"><p class="text-sky-300">Profit Chance</p><p id="profitChance" class="font-bold text-white"></p></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM ELEMENTS ---
+        const entryPriceInput = document.getElementById('entryPrice');
+        const atrValueInput = document.getElementById('atrValue');
+        const atrMultiplierInput = document.getElementById('atrMultiplier');
+        const rewardRatioInput = document.getElementById('rewardRatio');
+        const stopLossDisplay = document.getElementById('stopLoss');
+        const takeProfitDisplay = document.getElementById('takeProfit');
+        const riskAmountDisplay = document.getElementById('riskAmount');
+        const longBtn = document.getElementById('longBtn');
+        const shortBtn = document.getElementById('shortBtn');
+        const winChanceInput = document.getElementById('winChance');
+        const breakEvenRatioDisplay = document.getElementById('breakEvenRatio');
+        // Simulation elements
+        const startCapitalInput = document.getElementById('startCapital');
+        const riskPercentInput = document.getElementById('riskPercent');
+        const numTradesInput = document.getElementById('numTrades');
+        const runSimBtn = document.getElementById('runSimBtn');
+        const simStats = document.getElementById('simStats');
+        const medianResult = document.getElementById('medianResult');
+        const bestCase = document.getElementById('bestCase');
+        const worstCase = document.getElementById('worstCase');
+        const profitChance = document.getElementById('profitChance');
+
+        let isLong = true;
+        let monteCarloChart;
+
+        // --- CALCULATORS ---
+        function calculateLevels() {
+            const entryPrice = parseFloat(entryPriceInput.value);
+            const atrValue = parseFloat(atrValueInput.value);
+            const atrMultiplier = parseFloat(atrMultiplierInput.value);
+            const rewardRatio = parseFloat(rewardRatioInput.value);
+
+            if (isNaN(entryPrice) || isNaN(atrValue) || isNaN(atrMultiplier) || isNaN(rewardRatio) || atrValue <= 0 || atrMultiplier <= 0 || rewardRatio <=0) {
+                stopLossDisplay.textContent = '--'; takeProfitDisplay.textContent = '--'; riskAmountDisplay.textContent = '--'; return;
+            }
+            const stopDistance = atrValue * atrMultiplier;
+            const profitDistance = stopDistance * rewardRatio;
+            let stopLossPrice, takeProfitPrice;
+            if (isLong) {
+                stopLossPrice = entryPrice - stopDistance;
+                takeProfitPrice = entryPrice + profitDistance;
+            } else {
+                stopLossPrice = entryPrice + stopDistance;
+                takeProfitPrice = entryPrice - profitDistance;
+            }
+            const decimals = (entryPrice.toString().split('.')[1] || '').length > 2 ? (entryPrice.toString().split('.')[1] || '').length : 2;
+            stopLossDisplay.textContent = `$${stopLossPrice.toFixed(decimals)}`;
+            takeProfitDisplay.textContent = `$${takeProfitPrice.toFixed(decimals)}`;
+            riskAmountDisplay.textContent = `$${stopDistance.toFixed(decimals)}`;
+        }
+
+        function calculateBreakEvenRatio() {
+            const winChance = parseFloat(winChanceInput.value);
+            if(isNaN(winChance) || winChance <= 0 || winChance >= 100) {
+                breakEvenRatioDisplay.textContent = '--'; return;
+            }
+            const lossChance = 100 - winChance;
+            const breakEvenRatio = lossChance / winChance;
+            breakEvenRatioDisplay.textContent = `1 : ${breakEvenRatio.toFixed(2)}`;
+        }
+
+        function setDirection(direction) {
+            isLong = (direction === 'long');
+            longBtn.classList.toggle('bg-indigo-600', isLong);
+            longBtn.classList.toggle('bg-gray-700', !isLong);
+            shortBtn.classList.toggle('bg-indigo-600', !isLong);
+            shortBtn.classList.toggle('bg-gray-700', isLong);
+            calculateLevels();
+        }
+
+        // --- MONTE CARLO SIMULATION ---
+        function runMonteCarlo() {
+            const startCapital = parseFloat(startCapitalInput.value);
+            const riskPercent = parseFloat(riskPercentInput.value) / 100;
+            const numTrades = parseInt(numTradesInput.value);
+            const winChance = parseFloat(winChanceInput.value) / 100;
+            const rewardRatio = parseFloat(rewardRatioInput.value);
+
+            if (isNaN(startCapital) || isNaN(riskPercent) || isNaN(numTrades) || isNaN(winChance) || isNaN(rewardRatio)) {
+                alert("Please fill in all simulation and strategy fields correctly.");
+                return;
+            }
+            
+            const totalSimulations = 1000;
+            const pathsToDraw = 100;
+            let allPaths = [];
+            let endingBalances = [];
+
+            for (let i = 0; i < totalSimulations; i++) {
+                let capital = startCapital;
+                let path = [startCapital];
+                for (let j = 0; j < numTrades; j++) {
+                    const riskAmount = capital * riskPercent;
+                    if (Math.random() < winChance) {
+                        capital += riskAmount * rewardRatio;
+                    } else {
+                        capital -= riskAmount;
+                    }
+                    if (capital <= 0) {
+                        capital = 0;
+                        // Fill rest of path with 0
+                        for(let k = j + 1; k < numTrades; k++) path.push(0);
+                        break; 
+                    }
+                    path.push(capital);
+                }
+                allPaths.push(path);
+                endingBalances.push(capital);
+            }
+
+            drawChart(allPaths.slice(0, pathsToDraw));
+            displayStats(endingBalances);
+        }
+
+        function drawChart(paths) {
+            const ctx = document.getElementById('monteCarloChart').getContext('2d');
+            if (monteCarloChart) {
+                monteCarloChart.destroy();
+            }
+
+            const labels = Array.from({ length: paths[0].length }, (_, i) => i);
+
+            const datasets = paths.map((path, index) => ({
+                label: `Sim ${index + 1}`,
+                data: path,
+                borderColor: 'rgba(59, 130, 246, 0.2)',
+                borderWidth: 1.5,
+                pointRadius: 0,
+                tension: 0.1
+            }));
+
+            monteCarloChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    scales: {
+                        y: {
+                            type: 'logarithmic',
+                            display: true,
+                            ticks: {
+                                color: '#9CA3AF',
+                                callback: function(value, index, values) {
+                                    if (value === 1000000) return '1M';
+                                    if (value === 1000) return '1K';
+                                    if (value === 100) return '100';
+                                    if (value === 10) return '10';
+                                    if (value === 1) return '1';
+                                    return null;
+                                }
+                            },
+                             grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#9CA3AF' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function displayStats(endingBalances) {
+            endingBalances.sort((a,b) => a - b);
+            const median = endingBalances[Math.floor(endingBalances.length / 2)];
+            const best = endingBalances[endingBalances.length - 1];
+            const worst = endingBalances[0];
+            const profitCount = endingBalances.filter(b => b > parseFloat(startCapitalInput.value)).length;
+            const profitPerc = (profitCount / endingBalances.length) * 100;
+            
+            const formatCurrency = (val) => val.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+            
+            medianResult.textContent = formatCurrency(median);
+            bestCase.textContent = formatCurrency(best);
+            worstCase.textContent = formatCurrency(worst);
+            profitChance.textContent = `${profitPerc.toFixed(1)}%`;
+            simStats.classList.remove('hidden');
+        }
+
+
+        // --- EVENT LISTENERS ---
+        [entryPriceInput, atrValueInput, atrMultiplierInput, rewardRatioInput].forEach(input => {
+            input.addEventListener('input', calculateLevels);
+        });
+        
+        winChanceInput.addEventListener('input', calculateBreakEvenRatio);
+        longBtn.addEventListener('click', () => setDirection('long'));
+        shortBtn.addEventListener('click', () => setDirection('short'));
+        runSimBtn.addEventListener('click', runMonteCarlo);
+
+        // Initial calculations on load
+        calculateBreakEvenRatio();
+
+    </script>
+</body>
+</html>
+
